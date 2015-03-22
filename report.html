@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+  <html>
+  <head>
+<style type="text/css">
+.knitr.inline {
+  background-color: #f7f7f7;
+  border:solid 1px #B0B0B0;
+}
+.error {
+	font-weight: bold;
+	color: #FF0000;
+},
+.warning {
+	font-weight: bold;
+}
+.message {
+	font-style: italic;
+}
+.source, .output, .warning, .error, .message {
+	padding: 0em 1em;
+  border:solid 1px #F7F7F7;
+}
+.source {
+  background-color: #f5f5f5;
+}
+.rimage.left {
+  text-align: left;
+}
+.rimage.right {
+  text-align: right;
+}
+.rimage.center {
+  text-align: center;
+}
+.hl.num {
+  color: #AF0F91;
+}
+.hl.str {
+  color: #317ECC;
+}
+.hl.com {
+  color: #AD95AF;
+  font-style: italic;
+}
+.hl.opt {
+  color: #000000;
+}
+.hl.std {
+  color: #585858;
+}
+.hl.kwa {
+  color: #295F94;
+  font-weight: bold;
+}
+.hl.kwb {
+  color: #B05A65;
+}
+.hl.kwc {
+  color: #55aa55;
+}
+.hl.kwd {
+  color: #BC5A65;
+  font-weight: bold;
+}
+</style>
+  <title>PML - Anders Viskum</title>
+  </head>
+  <body>
+  <h1>PML - Anders Viskum</h1>
+  
+ <h3>Load data</h3>
+ 
+<div class="chunk" id="unnamed-chunk-1"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">library</span><span class="hl std">(caret)</span>
+</pre></div>
+<div class="message"><pre class="knitr r">## Loading required package: lattice
+## Loading required package: ggplot2
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">setwd</span><span class="hl std">(</span><span class="hl str">&quot;C:/Users/ANV.NCLAN/Desktop/Assign1&quot;</span><span class="hl std">)</span>
+
+<span class="hl std">testing</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">read.csv</span><span class="hl std">(</span><span class="hl str">&quot;pml-testing.csv&quot;</span><span class="hl std">,</span> <span class="hl kwc">header</span><span class="hl std">=T)</span>
+<span class="hl std">training</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">read.csv</span><span class="hl std">(</span><span class="hl str">&quot;pml-training.csv&quot;</span><span class="hl std">,</span> <span class="hl kwc">header</span><span class="hl std">=T)</span>
+</pre></div>
+</div></div>
+ 
+The nearZeroVar function is used to find variables with a very low variance. These are then removed from the training set.
+ 
+<div class="chunk" id="unnamed-chunk-2"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">nz</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">nearZeroVar</span><span class="hl std">(training)</span>
+<span class="hl std">training</span> <span class="hl kwb">&lt;-</span> <span class="hl std">training[,</span><span class="hl opt">-</span><span class="hl std">nz]</span>
+</pre></div>
+</div></div>
+
+Columns with a lot of NAs are removed as well.
+
+<div class="chunk" id="unnamed-chunk-3"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">na.cols</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">apply</span><span class="hl std">(training,</span><span class="hl num">2</span><span class="hl std">,</span><span class="hl kwa">function</span><span class="hl std">(</span><span class="hl kwc">x</span><span class="hl std">)</span> <span class="hl kwd">length</span><span class="hl std">(x[</span><span class="hl kwd">is.na</span><span class="hl std">(x)]))</span>
+
+<span class="hl com"># Some columns have exactly 19216 NA values. These columns are removed from the dataset.</span>
+<span class="hl std">training</span> <span class="hl kwb">&lt;-</span> <span class="hl std">training[,</span><span class="hl opt">-</span><span class="hl kwd">which</span><span class="hl std">(na.cols</span><span class="hl opt">==</span><span class="hl num">19216</span><span class="hl std">)]</span>
+</pre></div>
+</div></div>
+
+
+10-fold cross validation are used in the train command (set through the trainControl). The method used in the prediction is lda. The X column looks like a counter variable and is removed.
+
+<div class="chunk" id="unnamed-chunk-4"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">tc</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">trainControl</span><span class="hl std">(</span><span class="hl kwc">method</span><span class="hl std">=</span><span class="hl str">&quot;repeatedcv&quot;</span><span class="hl std">,</span><span class="hl kwc">repeats</span><span class="hl std">=</span><span class="hl num">3</span><span class="hl std">)</span>
+
+<span class="hl std">model</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">train</span><span class="hl std">(classe</span> <span class="hl opt">~</span> <span class="hl std">.</span> <span class="hl opt">-</span><span class="hl std">X,</span> <span class="hl kwc">data</span><span class="hl std">=training,</span> <span class="hl kwc">method</span><span class="hl std">=</span><span class="hl str">&quot;lda&quot;</span><span class="hl std">,</span> <span class="hl kwc">trControl</span><span class="hl std">=tc,</span> <span class="hl kwc">verbose</span><span class="hl std">=F)</span>
+</pre></div>
+<div class="message"><pre class="knitr r">## Loading required package: MASS
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning in lda.default(x, grouping, ...): variables are collinear
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl std">model</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## Linear Discriminant Analysis 
+## 
+## 19622 samples
+##    58 predictor
+##     5 classes: 'A', 'B', 'C', 'D', 'E' 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+## 
+## Summary of sample sizes: 17660, 17661, 17660, 17660, 17658, 17659, ... 
+## 
+## Resampling results
+## 
+##   Accuracy   Kappa      Accuracy SD  Kappa SD 
+##   0.8549432  0.8166346  0.009556868  0.0120173
+## 
+## 
+</pre></div>
+</div></div>
+As seen from the resampling results, the accuracy is .855. Which mean the expected out of sample error is 1-.855 = 0.145.
+
+</body>
+</html>
